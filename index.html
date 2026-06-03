@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Witcher 3 — Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script>
+window.storage={
+  get:async(k)=>{const v=localStorage.getItem('w3_'+k);return v!==null?{key:k,value:v}:null},
+  set:async(k,v)=>{localStorage.setItem('w3_'+k,v);return{key:k,value:v}},
+  delete:async(k)=>{localStorage.removeItem('w3_'+k);return{key:k,deleted:true}},
+  list:async(p)=>({keys:Object.keys(localStorage).filter(k=>k.startsWith('w3_'+(p||''))).map(k=>k.slice(3))})
+};
+</script>
+<script type="text/babel" data-presets="react" src="data.js"></script>
+<script type="text/babel" data-presets="react" src="app.js"></script>
+</body>
+</html>
