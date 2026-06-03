@@ -150,8 +150,6 @@ function AchievementBadge({achId,checked,onToggle}){
       )}
     </div>
   );
-    </div>
-  );
 }
 
 /* ═══ QUEST ITEM ═══ */
