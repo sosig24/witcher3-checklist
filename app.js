@@ -14,20 +14,23 @@ const C={
 const FD="'Cinzel','Palatino Linotype',serif";
 const FB="'Crimson Text','Palatino Linotype',serif";
 
-/* Row background tints per type */
+/* Distinct row backgrounds — carefully separated */
 const ROW_BG={
-  'Main Quest':    '#08121e',
-  'Side Quest':    '#07140f',
-  'Contract':      '#110e04',
-  'Treasure Hunt': '#0e0918',
-  'Event':         '#080e08',
-  'Race':          '#110900',
+  'Main Quest':    '#060f1e',  /* deep navy */
+  'Side Quest':    '#041e14',  /* deep emerald-teal */
+  'Contract':      '#1e1400',  /* deep amber-gold */
+  'Treasure Hunt': '#100620',  /* deep violet */
+  'Event':         '#0a1200',  /* deep olive-green (not teal!) */
+  'Race':          '#200800',  /* deep rust-orange */
 };
 const TYPE_COLOR={
-  'Main Quest':C.blue,'Side Quest':'#3aaa7a','Contract':C.amber,
-  'Treasure Hunt':C.purple,'Event':C.green,'Race':C.orange,
+  'Main Quest':    '#4a9eff',  /* bright blue */
+  'Side Quest':    '#28c890',  /* bright emerald */
+  'Contract':      '#d4a020',  /* gold */
+  'Treasure Hunt': '#a060d0',  /* violet */
+  'Event':         '#80b020',  /* yellow-green */
+  'Race':          '#e06020',  /* orange */
 };
-
 const LEGEND_TYPES=['Main Quest','Side Quest','Contract','Treasure Hunt','Event','Race'];
 
 function whenConf(w){
@@ -40,7 +43,6 @@ function whenConf(w){
   return{color:C.silv,label:w};
 }
 
-/* ── Base components ── */
 function Bar({done,total,color=C.blue}){
   const pct=total>0?Math.round(done/total*100):0;
   return(
@@ -52,6 +54,7 @@ function Bar({done,total,color=C.blue}){
     </div>
   );
 }
+
 function Checkbox({checked,onChange,color=C.blue,size=15}){
   return(
     <div onClick={onChange} style={{width:size,height:size,flexShrink:0,cursor:'pointer',
@@ -63,51 +66,29 @@ function Checkbox({checked,onChange,color=C.blue,size=15}){
   );
 }
 
-/* ── Achievement badge inline on quest ── */
-function QuestAchBadge({achId,checked,onToggle}){
-  const ach=ACHIEVEMENTS.find(a=>a.id===achId);
-  if(!ach)return null;
-  const done=!!checked[achId];
-  const[open,setOpen]=useState(false);
-  return(
-    <div style={{marginLeft:'23px',marginRight:'8px',marginBottom:'3px'}}>
-      <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
-        <Checkbox checked={done} onChange={()=>onToggle(achId)} color={C.amberLt} size={12}/>
-        <button onClick={()=>setOpen(o=>!o)}
-          style={{fontFamily:FD,fontSize:'10px',letterSpacing:'0.5px',padding:'2px 8px',
-            cursor:'pointer',border:`1px solid ${done?'#4a4a20':'#5a4a10'}`,
-            background:done?'#0a0c06':'#0c0e04',color:done?'#5a6030':C.amberLt,
-            borderRadius:'3px',textAlign:'left',flex:1,
-            textDecoration:done?'line-through':'none',transition:'all 0.1s'}}>
-          🏆 {ach.name} {open?'▲':'▼'}
-        </button>
-      </div>
-      {open&&(
-        <div style={{fontFamily:FB,fontSize:'12px',color:C.silverDm,fontStyle:'italic',
-          margin:'3px 0 3px 18px',padding:'5px 8px',lineHeight:'1.4',
-          background:C.bgHdr,border:`1px solid ${C.border}`,borderRadius:'3px'}}>
-          {ach.desc}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── Quest row ── */
+/* ── Quest row with inline achievement buttons ── */
 function QItem({item,checked,onToggle}){
   const done=!!checked[item.id];
   const rowBg=done?C.doneBg:(ROW_BG[item.type]||C.bgCard);
+  const typeCol=TYPE_COLOR[item.type]||C.blue;
   const wc=whenConf(item.when);
   const linked=QUEST_ACHIEVEMENTS[item.id]||[];
-  const fb=item.from!=='Wild Hunt'?{label:item.from==='Hearts of Stone'?'HoS':'B&W',color:item.from==='Hearts of Stone'?C.hos:C.bw}:null;
+  const[openAch,setOpenAch]=useState(null);
+  const fb=item.from!=='Wild Hunt'?{label:item.from==='Hearts of Stone'?'HoS':'B&W',
+    color:item.from==='Hearts of Stone'?C.hos:C.bw}:null;
+
+  const toggleAch=(id)=>setOpenAch(prev=>prev===id?null:id);
+
   return(
     <div style={{borderBottom:`1px solid ${C.border}`,background:rowBg,transition:'background 0.1s'}}>
       <div style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'6px 10px'}}>
+        {/* Checkbox */}
         <div style={{marginTop:'3px',flexShrink:0}}>
-          <Checkbox checked={done} onChange={()=>onToggle(item.id)} color={TYPE_COLOR[item.type]||C.blue}/>
+          <Checkbox checked={done} onChange={()=>onToggle(item.id)} color={typeCol}/>
         </div>
+        {/* Main content */}
         <div style={{flex:1,minWidth:0,cursor:'pointer'}} onClick={()=>onToggle(item.id)}>
-          <div style={{display:'flex',alignItems:'center',gap:'6px',flexWrap:'wrap'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'5px',flexWrap:'wrap'}}>
             <span style={{fontFamily:FB,fontSize:'14px',lineHeight:'1.3',
               color:done?C.doneTx:C.silver,textDecoration:done?'line-through':'none',transition:'color 0.15s'}}>
               {item.name}
@@ -125,15 +106,54 @@ function QItem({item,checked,onToggle}){
             </div>
           )}
         </div>
-        {item.marker&&(
-          <a href={item.marker} target="_blank" rel="noopener noreferrer"
-            style={{fontFamily:FD,fontSize:'9px',letterSpacing:'1px',padding:'3px 7px',
-              border:`1px solid ${C.teal}55`,color:C.tealLt,borderRadius:'3px',
-              textDecoration:'none',flexShrink:0,marginTop:'2px',background:'#081414',
-              textTransform:'uppercase',whiteSpace:'nowrap'}}>📍 Map</a>
-        )}
+        {/* Right-side buttons: achievements + map */}
+        <div style={{display:'flex',gap:'4px',alignItems:'flex-start',flexShrink:0,flexWrap:'wrap',justifyContent:'flex-end',maxWidth:'200px'}}>
+          {linked.map(achId=>{
+            const ach=ACHIEVEMENTS.find(a=>a.id===achId);
+            if(!ach)return null;
+            const achDone=!!checked[achId];
+            const isOpen=openAch===achId;
+            return(
+              <button key={achId}
+                onClick={e=>{e.stopPropagation();toggleAch(achId);}}
+                style={{fontFamily:FD,fontSize:'9px',letterSpacing:'0.5px',padding:'3px 6px',
+                  cursor:'pointer',border:`1px solid ${achDone?'#4a5a20':'#6a5a10'}`,
+                  background:achDone?'#0a0e06':'#0e0e04',
+                  color:achDone?'#5a7030':C.amberLt,
+                  borderRadius:'3px',whiteSpace:'nowrap',
+                  textDecoration:achDone?'line-through':'none',
+                  outline:isOpen?`1px solid ${C.amberLt}`:'none',
+                  transition:'all 0.1s'}}>
+                🏆 {ach.name.length>18?ach.name.slice(0,17)+'…':ach.name}
+              </button>
+            );
+          })}
+          {item.marker&&(
+            <a href={item.marker} target="_blank" rel="noopener noreferrer"
+              style={{fontFamily:FD,fontSize:'9px',letterSpacing:'1px',padding:'3px 7px',
+                border:`1px solid ${C.teal}55`,color:C.tealLt,borderRadius:'3px',
+                textDecoration:'none',background:'#081414',
+                textTransform:'uppercase',whiteSpace:'nowrap'}}>📍 Map</a>
+          )}
+        </div>
       </div>
-      {linked.map(id=><QuestAchBadge key={id} achId={id} checked={checked} onToggle={onToggle}/>)}
+      {/* Achievement hint dropdown */}
+      {openAch&&(()=>{
+        const ach=ACHIEVEMENTS.find(a=>a.id===openAch);
+        const achDone=!!checked[openAch];
+        if(!ach)return null;
+        return(
+          <div style={{display:'flex',alignItems:'flex-start',gap:'8px',
+            padding:'4px 10px 6px 33px',background:'#0c0e04',
+            borderTop:`1px solid #3a3010`}}>
+            <Checkbox checked={achDone} onChange={()=>{onToggle(openAch);}} color={C.amberLt} size={13}/>
+            <div style={{flex:1}}>
+              <span style={{fontFamily:FD,fontSize:'10px',color:C.amberLt,letterSpacing:'0.5px'}}>{ach.name}</span>
+              <span style={{fontFamily:FB,fontSize:'12px',color:C.silverDm,fontStyle:'italic',marginLeft:'8px',lineHeight:'1.4'}}>{ach.desc}</span>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -142,7 +162,6 @@ function QItem({item,checked,onToggle}){
 function QuestsTab({checked,onToggle}){
   const unchecked=QUESTS.filter(q=>!checked[q.id]);
   const done=QUESTS.filter(q=>!!checked[q.id]);
-  const sorted=[...unchecked,...done];
   return(
     <div>
       <div style={{padding:'8px 12px',background:C.bgHdr,border:`1px solid ${C.border}`,
@@ -150,23 +169,23 @@ function QuestsTab({checked,onToggle}){
         <span style={{fontFamily:FD,fontSize:'10px',color:C.silverDm,letterSpacing:'1px',textTransform:'uppercase'}}>Progress</span>
         <div style={{flex:1}}><Bar done={done.length} total={QUESTS.length} color={C.blue}/></div>
       </div>
-      {/* Legend */}
-      <div style={{display:'flex',flexWrap:'wrap',gap:'10px',marginBottom:'12px',
+      <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'12px',
         padding:'7px 12px',background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:'4px',alignItems:'center'}}>
         <span style={{fontFamily:FD,fontSize:'10px',color:C.silverDm,letterSpacing:'1px',textTransform:'uppercase',marginRight:'2px'}}>Legend:</span>
         {LEGEND_TYPES.map(t=>(
           <div key={t} style={{display:'flex',alignItems:'center',gap:'5px'}}>
-            <div style={{width:'10px',height:'10px',borderRadius:'2px',background:ROW_BG[t],border:`1px solid ${TYPE_COLOR[t]}88`,flexShrink:0}}/>
+            <div style={{width:'10px',height:'10px',borderRadius:'2px',
+              background:ROW_BG[t],border:`1.5px solid ${TYPE_COLOR[t]}`,flexShrink:0}}/>
             <span style={{fontFamily:FD,fontSize:'10px',color:TYPE_COLOR[t],letterSpacing:'0.5px'}}>{t}</span>
           </div>
         ))}
       </div>
       <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:'5px',overflow:'hidden'}}>
-        {sorted.map(q=><QItem key={q.id} item={q} checked={checked} onToggle={onToggle}/>)}
+        {[...unchecked,...done].map(q=><QItem key={q.id} item={q} checked={checked} onToggle={onToggle}/>)}
       </div>
       {done.length>0&&(
         <div style={{fontFamily:FB,fontSize:'12px',color:C.silverDm,fontStyle:'italic',textAlign:'center',marginTop:'8px',opacity:0.6}}>
-          {done.length} completed quest{done.length!==1?'s':''} shown at bottom
+          {done.length} completed quest{done.length!==1?'s':''} at bottom
         </div>
       )}
     </div>
@@ -177,8 +196,9 @@ function QuestsTab({checked,onToggle}){
 function AchItem({ach,checked,onToggle}){
   const done=!!checked[ach.id];
   const[open,setOpen]=useState(false);
-  const col=ach.cat==='Difficulty'?C.amber:ach.cat.startsWith('Story')||ach.cat.startsWith('Missable')?'#ffaa22':
-    ach.cat==='Hearts of Stone'?C.hos:ach.cat==='Blood and Wine'?C.bw:'#aabbcc';
+  const col=ach.cat==='Difficulty'?C.amber:
+    ach.cat==='Hearts of Stone'?C.hos:ach.cat==='Blood and Wine'?C.bw:
+    (ach.cat==='Story'||ach.cat==='Missable')?'#ffaa22':'#aabbcc';
   return(
     <div style={{borderBottom:`1px solid ${C.border}`,background:done?C.doneBg:'transparent'}}>
       <div style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'7px 12px'}}>
@@ -190,7 +210,7 @@ function AchItem({ach,checked,onToggle}){
         <button onClick={e=>{e.stopPropagation();setOpen(o=>!o);}}
           style={{fontFamily:FD,fontSize:'9px',letterSpacing:'1px',padding:'3px 8px',cursor:'pointer',
             border:`1px solid ${col}44`,background:'transparent',color:col,borderRadius:'3px',
-            textTransform:'uppercase',flexShrink:0,transition:'all 0.12s'}}>{open?'▲':'▼ how'}</button>
+            textTransform:'uppercase',flexShrink:0}}>{open?'▲':'▼ how'}</button>
       </div>
       {open&&(
         <div style={{fontFamily:FB,fontSize:'12px',color:C.silverDm,fontStyle:'italic',
@@ -203,7 +223,6 @@ function AchItem({ach,checked,onToggle}){
   );
 }
 
-/* ── Achievement category ── */
 function AchCategory({cat,achs,checked,onToggle}){
   const saved=sessionStorage.getItem('achopen_'+cat);
   const[open,setOpen]=useState(saved===null?true:saved==='1');
@@ -211,12 +230,12 @@ function AchCategory({cat,achs,checked,onToggle}){
   const done=achs.filter(a=>checked[a.id]).length;
   const allDone=done===achs.length&&achs.length>0;
   const col=cat==='Difficulty'?C.amber:cat==='Hearts of Stone'?C.hos:cat==='Blood and Wine'?C.bw:
-    cat.startsWith('Story')||cat.startsWith('Missable')?'#ffaa22':'#aabbcc';
+    (cat==='Story'||cat==='Missable')?'#ffaa22':'#aabbcc';
   return(
     <div style={{marginBottom:'6px'}}>
       <div onClick={toggle} style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 12px',
-        background:allDone?`${col}0a`:C.bgHdr,cursor:'pointer',userSelect:'none',transition:'all 0.2s',
-        border:`1px solid ${allDone?col+'44':C.border}`,borderRadius:'4px'}}>
+        background:allDone?`${col}0a`:C.bgHdr,cursor:'pointer',userSelect:'none',
+        border:`1px solid ${allDone?col+'44':C.border}`,borderRadius:'4px',transition:'all 0.2s'}}>
         <span style={{color:col,fontSize:'10px',display:'inline-block',transition:'transform 0.2s',
           transform:open?'rotate(90deg)':'none'}}>▶</span>
         <span style={{fontFamily:FD,fontSize:'12px',letterSpacing:'1px',flex:1,
@@ -234,7 +253,6 @@ function AchCategory({cat,achs,checked,onToggle}){
   );
 }
 
-/* ── Achievements tab ── */
 function AchievementsTab({checked,onToggle}){
   const cats=[...new Set(ACHIEVEMENTS.map(a=>a.cat))];
   const bycat={};
@@ -259,38 +277,33 @@ function AchievementsTab({checked,onToggle}){
   );
 }
 
-/* ── Skill card ── */
+/* ── Builds tab ── */
 function SkillCard({skill}){
   const treeColor={'Fast Attack':'#e87040','Strong Attack':'#e84040','Combat':'#4080e8',
     'Alchemy':'#60b840','Signs':'#9040e8','General':'#e8b040'}[skill.tree]||C.silv;
   return(
     <div style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'6px 8px',
-      background:'#09100c',border:`1px solid ${treeColor}33`,borderRadius:'4px',
-      borderLeft:`3px solid ${treeColor}88`}}>
+      background:'#09100c',border:`1px solid ${treeColor}33`,borderRadius:'4px',borderLeft:`3px solid ${treeColor}88`}}>
       <div style={{width:32,height:32,flexShrink:0,background:'#0c1410',border:`1px solid ${treeColor}44`,
         borderRadius:'3px',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
         <img src={`icons/builds/skill_${skill.id}.png`} width="30" height="30" alt={skill.name}
-          onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}}
-          style={{objectFit:'cover'}}/>
+          onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='flex';}} style={{objectFit:'cover'}}/>
         <div style={{display:'none',width:'100%',height:'100%',alignItems:'center',justifyContent:'center',
-          fontFamily:FD,fontSize:'9px',color:treeColor,textAlign:'center',lineHeight:'1.1',padding:'2px'}}>
+          fontFamily:FD,fontSize:'8px',color:treeColor,textAlign:'center',lineHeight:'1.1',padding:'2px'}}>
           {skill.name.split(' ').slice(0,2).join('\n')}
         </div>
       </div>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:'flex',alignItems:'center',gap:'5px',flexWrap:'wrap'}}>
-          <span style={{fontFamily:FD,fontSize:'11px',color:treeColor,letterSpacing:'0.5px'}}>{skill.name}</span>
-          <span style={{fontFamily:FD,fontSize:'9px',color:C.silverDm,letterSpacing:'1px',
-            border:`1px solid ${treeColor}33`,borderRadius:'2px',padding:'0 4px'}}>{skill.lv}</span>
+          <span style={{fontFamily:FD,fontSize:'11px',color:treeColor}}>{skill.name}</span>
+          <span style={{fontFamily:FD,fontSize:'9px',color:C.silverDm,border:`1px solid ${treeColor}33`,borderRadius:'2px',padding:'0 4px'}}>{skill.lv}</span>
           <span style={{fontFamily:FB,fontSize:'10px',color:C.silverDm,fontStyle:'italic'}}>{skill.tree}</span>
         </div>
-        <div style={{fontFamily:FB,fontSize:'12px',color:C.silv,marginTop:'1px'}}>{skill.desc}</div>
+        <div style={{fontFamily:FB,fontSize:'12px',color:C.silv}}>{skill.desc}</div>
       </div>
     </div>
   );
 }
-
-/* ── Gear card ── */
 function GearCard({item}){
   return(
     <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'5px 8px',
@@ -298,21 +311,18 @@ function GearCard({item}){
       <div style={{width:28,height:28,flexShrink:0,background:C.bgCard,border:`1px solid ${C.border2}`,
         borderRadius:'3px',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
         <img src={`icons/builds/gear_${item.id}.png`} width="26" height="26" alt={item.name}
-          onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='block';}}
-          style={{objectFit:'cover'}}/>
+          onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='block';}} style={{objectFit:'cover'}}/>
         <span style={{display:'none',fontSize:'10px'}}>⚔</span>
       </div>
       <div style={{flex:1,minWidth:0}}>
         <span style={{fontFamily:FD,fontSize:'11px',color:C.silver}}>{item.name}</span>
-        <span style={{fontFamily:FD,fontSize:'9px',color:C.silverDm,marginLeft:'6px',letterSpacing:'1px',
+        <span style={{fontFamily:FD,fontSize:'9px',color:C.silverDm,marginLeft:'6px',
           border:`1px solid ${C.border}`,borderRadius:'2px',padding:'0 4px'}}>{item.slot}</span>
         <div style={{fontFamily:FB,fontSize:'11px',color:C.silverDm,fontStyle:'italic'}}>{item.note}</div>
       </div>
     </div>
   );
 }
-
-/* ── Decoction card ── */
 function DecCard({dec}){
   return(
     <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'5px 8px',
@@ -320,8 +330,7 @@ function DecCard({dec}){
       <div style={{width:26,height:26,flexShrink:0,background:'#08140a',border:`1px solid ${C.green}44`,
         borderRadius:'3px',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
         <img src={`icons/builds/dec_${dec.id.replace('dec_','')}.png`} width="24" height="24" alt={dec.name}
-          onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='block';}}
-          style={{objectFit:'cover'}}/>
+          onError={e=>{e.target.style.display='none';e.target.nextSibling.style.display='block';}} style={{objectFit:'cover'}}/>
         <span style={{display:'none',fontSize:'12px'}}>🧪</span>
       </div>
       <div>
@@ -331,15 +340,12 @@ function DecCard({dec}){
     </div>
   );
 }
-
-/* ── Builds tab ── */
 function BuildsTab(){
   const[phase,setPhase]=useState('early');
   const b=BUILDS[phase];
   const phases=[{id:'early',label:'Early Game',sub:'Lvl 1–11'},{id:'mid',label:'Mid Game',sub:'Lvl 12–34'},{id:'end',label:'End Game',sub:'Lvl 35+'}];
   return(
     <div>
-      {/* Phase selector */}
       <div style={{display:'flex',gap:'8px',marginBottom:'16px',flexWrap:'wrap'}}>
         {phases.map(p=>(
           <button key={p.id} onClick={()=>setPhase(p.id)}
@@ -352,7 +358,6 @@ function BuildsTab(){
           </button>
         ))}
       </div>
-      {/* Header */}
       <div style={{padding:'14px 16px',background:C.bgHdr,border:`1px solid ${C.border}`,
         borderRadius:'5px',marginBottom:'14px',borderTop:`2px solid ${C.blue}`}}>
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'12px',flexWrap:'wrap'}}>
@@ -373,9 +378,7 @@ function BuildsTab(){
           ⚙ Key Mechanic: {b.mechanic}
         </div>
       </div>
-      {/* Three columns */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:'12px',marginBottom:'14px'}}>
-        {/* Skills */}
         <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:'5px',overflow:'hidden'}}>
           <div style={{padding:'8px 12px',background:C.bgHdr,borderBottom:`1px solid ${C.border}`}}>
             <span style={{fontFamily:FD,fontSize:'11px',color:C.silver,letterSpacing:'2px',textTransform:'uppercase'}}>Skills</span>
@@ -384,7 +387,6 @@ function BuildsTab(){
             {b.skills.map(s=><SkillCard key={s.id} skill={s}/>)}
           </div>
         </div>
-        {/* Gear + Decoctions */}
         <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
           <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:'5px',overflow:'hidden'}}>
             <div style={{padding:'8px 12px',background:C.bgHdr,borderBottom:`1px solid ${C.border}`}}>
@@ -404,7 +406,6 @@ function BuildsTab(){
           </div>
         </div>
       </div>
-      {/* Tips */}
       <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:'5px',overflow:'hidden'}}>
         <div style={{padding:'8px 12px',background:C.bgHdr,borderBottom:`1px solid ${C.border}`}}>
           <span style={{fontFamily:FD,fontSize:'11px',color:C.amber,letterSpacing:'2px',textTransform:'uppercase'}}>Tips</span>
@@ -444,16 +445,15 @@ function Overview({checked,onReset}){
   const aTotal=ACHIEVEMENTS.length;
   const overall=Math.round((qDone+aDone)/(qTotal+aTotal)*100);
   const byType=[
-    {l:'Main Quests',    t:'Main Quest',    col:C.blue},
-    {l:'Side Quests',    t:'Side Quest',    col:'#3aaa7a'},
-    {l:'Contracts',      t:'Contract',      col:C.amber},
-    {l:'Treasure Hunts', t:'Treasure Hunt', col:C.purple},
-    {l:'Events',         t:'Event',         col:C.green},
-    {l:'Races',          t:'Race',          col:C.orange},
+    {l:'Main Quests',    t:'Main Quest',    col:TYPE_COLOR['Main Quest']},
+    {l:'Side Quests',    t:'Side Quest',    col:TYPE_COLOR['Side Quest']},
+    {l:'Contracts',      t:'Contract',      col:TYPE_COLOR['Contract']},
+    {l:'Treasure Hunts', t:'Treasure Hunt', col:TYPE_COLOR['Treasure Hunt']},
+    {l:'Events',         t:'Event',         col:TYPE_COLOR['Event']},
+    {l:'Races',          t:'Race',          col:TYPE_COLOR['Race']},
   ].map(x=>({...x,done:QUESTS.filter(q=>q.type===x.t&&checked[q.id]).length,total:QUESTS.filter(q=>q.type===x.t).length}));
   return(
     <div>
-      {/* Hero */}
       <div style={{display:'flex',alignItems:'center',gap:'20px',padding:'20px',
         background:C.bgHdr,border:`1px solid ${C.border}`,borderRadius:'6px',marginBottom:'18px',
         backgroundImage:`radial-gradient(ellipse at 0% 50%,${C.blueDk}66 0%,transparent 60%)`}}>
@@ -468,13 +468,13 @@ function Overview({checked,onReset}){
           </div>
           <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
             <div style={{flex:1}}><Bar done={qDone+aDone} total={qTotal+aTotal} color={C.blue}/></div>
-            <button onClick={onReset} style={{fontFamily:FD,fontSize:'9px',letterSpacing:'1px',padding:'4px 10px',
-              cursor:'pointer',border:`1px solid #cc444455`,background:'transparent',color:C.red,
-              borderRadius:'3px',textTransform:'uppercase',flexShrink:0,whiteSpace:'nowrap'}}>Reset</button>
+            <button onClick={onReset} style={{fontFamily:FD,fontSize:'9px',letterSpacing:'1px',
+              padding:'4px 10px',cursor:'pointer',border:`1px solid #cc444455`,
+              background:'transparent',color:C.red,borderRadius:'3px',
+              textTransform:'uppercase',flexShrink:0,whiteSpace:'nowrap'}}>Reset</button>
           </div>
         </div>
       </div>
-      {/* Quests + Achievements summary */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px',marginBottom:'10px'}}>
         {[{l:'Quests',done:qDone,total:qTotal,col:C.blue},{l:'Achievements',done:aDone,total:aTotal,col:C.amber}].map(x=>(
           <div key={x.l} style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:'5px',padding:'12px 14px'}}>
@@ -483,7 +483,6 @@ function Overview({checked,onReset}){
           </div>
         ))}
       </div>
-      {/* By type */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(175px,1fr))',gap:'8px'}}>
         {byType.map(t=>(
           <div key={t.l} style={{background:C.bgCard,border:`1px solid ${C.border}`,
@@ -511,12 +510,10 @@ function App(){
     try{const r=localStorage.getItem('w3v2');if(r)setChecked(JSON.parse(r).checked||{});}catch(e){}
     setLoaded(true);
   },[]);
-
   useEffect(()=>{
     if(!loaded)return;
     try{localStorage.setItem('w3v2',JSON.stringify({checked}));}catch(e){}
   },[checked,loaded]);
-
   useEffect(()=>{
     if(!loaded)return;
     const prev=prevTab.current;
@@ -531,7 +528,6 @@ function App(){
   const toggle=useCallback((id)=>{
     setChecked(prev=>{const n={...prev};if(n[id])delete n[id];else n[id]=Date.now();return n;});
   },[]);
-
   const reset=()=>{if(confirm('Reset all progress?'))setChecked({});};
 
   const qDone=QUESTS.filter(q=>checked[q.id]).length;
@@ -561,7 +557,6 @@ function App(){
           </div>
         </div>
       </div>
-
       <div style={{background:C.bgCard,borderBottom:`1px solid ${C.border}`,
         position:'sticky',top:0,zIndex:100,boxShadow:'0 2px 12px #00000099'}}>
         <div style={{maxWidth:'1180px',margin:'0 auto',display:'flex',padding:'0 12px'}}>
@@ -576,7 +571,6 @@ function App(){
           ))}
         </div>
       </div>
-
       <div style={{maxWidth:'1180px',margin:'0 auto',padding:'18px 14px'}}>
         {tab!=='overview'&&(
           <div style={{marginBottom:'14px',paddingBottom:'10px',borderBottom:`1px solid ${C.border}`}}>
@@ -591,7 +585,6 @@ function App(){
         {tab==='achievements'&&<AchievementsTab checked={checked} onToggle={toggle}/>}
         {tab==='builds'      &&<BuildsTab/>}
       </div>
-
       {!loaded&&(
         <div style={{position:'fixed',inset:0,background:C.bg,display:'flex',
           alignItems:'center',justifyContent:'center',zIndex:9999}}>
