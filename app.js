@@ -193,12 +193,27 @@ function QuestsTab({checked,onToggle}){
 }
 
 /* ── Achievement item ── */
+function achBaseCat(cat){
+  const parts=cat.split(' - ');
+  return parts.length>1?parts[1]:cat;
+}
+function achColor(cat){
+  const base=achBaseCat(cat);
+  return ({
+    'Story':C.blueLt,
+    'Missable':C.amberLt,
+    'Combat & Skills':'#e87040',
+    'Exploration':C.tealLt,
+    'Difficulty':C.amber,
+    'Hearts of Stone':C.hos,
+    'Blood and Wine':C.bw,
+  })[base]||'#aabbcc';
+}
+
 function AchItem({ach,checked,onToggle}){
   const done=!!checked[ach.id];
   const[open,setOpen]=useState(false);
-  const col=ach.cat==='Difficulty'?C.amber:
-    ach.cat==='Hearts of Stone'?C.hos:ach.cat==='Blood and Wine'?C.bw:
-    (ach.cat==='Story'||ach.cat==='Missable')?'#ffaa22':'#aabbcc';
+  const col=achColor(ach.cat);
   return(
     <div style={{borderBottom:`1px solid ${C.border}`,background:done?C.doneBg:'transparent'}}>
       <div style={{display:'flex',alignItems:'flex-start',gap:'8px',padding:'7px 12px'}}>
@@ -229,8 +244,7 @@ function AchCategory({cat,achs,checked,onToggle}){
   const toggle=()=>{const n=!open;sessionStorage.setItem('achopen_'+cat,n?'1':'0');setOpen(n);};
   const done=achs.filter(a=>checked[a.id]).length;
   const allDone=done===achs.length&&achs.length>0;
-  const col=cat==='Difficulty'?C.amber:cat==='Hearts of Stone'?C.hos:cat==='Blood and Wine'?C.bw:
-    (cat==='Story'||cat==='Missable')?'#ffaa22':'#aabbcc';
+  const col=achColor(cat);
   return(
     <div style={{marginBottom:'6px'}}>
       <div onClick={toggle} style={{display:'flex',alignItems:'center',gap:'8px',padding:'7px 12px',
